@@ -1,0 +1,30 @@
+{
+  "name": "partrick_reveli",
+  "version": "1.0.0",
+  "description": "A simple ecommerce web api",
+  "main": "server.js",
+  "scripts": {
+    "start": " nodemon server.js "
+  },
+  "keywords": [
+    "eCommerce Store",
+    "Web Api",
+    "Expressjs"
+  ],
+  "author": " Creative Outlines",
+  "license": "ISC",
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "config": "^3.3.2",
+    "cors": "^2.8.5",
+    "express": "^4.17.1",
+    "express-validator": "^6.6.1",
+    "jsonwebtoken": "^8.5.1",
+    "mongoose": "^5.10.8",
+    "multer": "^1.4.2"
+  },
+  "devDependencies": {
+    "concurrently": "^5.3.0",
+    "nodemon": "^2.0.4"
+  }
+}
