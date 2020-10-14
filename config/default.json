@@ -1,3 +1,4 @@
 {
+    "mongoURI":"mongodb+srv://Tony:Pills@expressapps.musqh.mongodb.net/cms?retryWrites=true&w=majority",
     "jwtSecret": "Secret"
 }

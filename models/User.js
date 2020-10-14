@@ -14,6 +14,10 @@ const userSchema = new Schema({
     date:{
         type : Date,
         default: Date.now
+    },
+    orders : {
+        type : mongoose.Schema.Types.ObjectId,
+        ref : 'order'
     }
 });
 

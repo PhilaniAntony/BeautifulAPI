@@ -1,33 +1,51 @@
 const express = require('express');
 const router = express.Router();
+const mongoose = require('mongoose');
 const { check, validationResult} = require('express-validator');
+const multer = require('multer');
 const auth = require('../middleware/auth');
 
-const multer = require('multer');
-const storage = multer.diskStorage({
-    destination : function(req,file, cb  ){
-        cb(null, './uploads/');
-    },
-    filename : function(req,file, cb ){
-        cb(null, new Date().toISOString() + file.originalname);
-    }
-});
-const fileFilter = (req, file, cb)=>{
-    //@desc check file type
+//@desc require users models
+const User = require('../models/User');
+//desc config multer for upload
 
-    if(file.mimetype === "image/jpeg" || file.mimetype === "image/png"){
-        cb(null, true);
-    }else{
-        cb(null, true);
-    }
-};
-const upload = multer({
-    storage: storage,
-    limits : {
-        fileSize :1024*1024*5
+  
+//@desc set up destination and filename
+const storageConfig  = multer.diskStorage({
+
+    //@desc destination of upload
+    destination : (req, file, next)=>{
+        next(null, 'uploads/');
     },
-    fileFilter : fileFilter
+        //@desc filename setup
+    filename: (req, file, next)=>{
+        next(null, new Date().toISOString() + file.originalname);
+    }
 });
+
+//@desc setting up file filter for validating image types
+const filefilter = (req, file, next)=>{
+    if( file.mimetype === 'image/jpeg' || file.mimetype === 'image/png'){
+        next(null, true);
+    }else{
+        next(null, false);
+    }
+}
+
+//@desc plugging in the configs in multer
+const upload = multer({
+    storage : storageConfig,
+    limits : { 
+        fileSize : 1024*1024*5
+    },
+    fileFilter : filefilter
+})
+
+
+
+
+
+
 
 
 //@desc require Product model
@@ -70,69 +88,11 @@ router.get('', (req, res)=>{
     });
 });
 
-
-//@desc Adding a new product
-//@meth POST
-//@route /products
-//@auth Public
-router.post('',[auth, upload.single('image'),  [
-    //@desc Perfom check on body using express-validator
-    check('name', 'Product must have a name').not().isEmpty(),
-    check('price', 'Product must have a price').not().isEmpty().isNumeric(),
-], upload.single('productImage')
-], (req, res)=>{
-   console.log(req.file);
-    //@desc  check if validation results have errors
-    const errors = validationResult(req);
-    if(!errors.isEmpty()){
-        res.status(500).json({
-            errors : errors.array()
-        })
-    }
-
-    //@desc save product to database
-   
-    //@desc create an instance of model 
-    const product = new Product({
-        name : req.body.name,
-        price: req.body.price,
-        image : req.file.path,
-    });
-
-    //@desc save  product to database
-    product.save()
-    .then(product=>{
-        const response = {
-            message : "Product based on id",
-            count : product.length,
-            product : {
-                    id : product._id,
-                    name : product.name,
-                    price : product.price,
-                    image : product.image,
-                    request : {
-                       type : "POST",
-                       url: `http://localhost/3000/products/${product._id}` 
-                    }
-            }
-        }     
-        res.status(200).json(response);
-    })  
-   .catch (err=>{
-    res.status(400).json({
-        message : err.message
-    })
-    console.error(err.message);
-   }); 
-   
-});
-
-
-//@desc Adding a new product
+//@desc Getting product by id
 //@meth GET
 //@route /products/:1
 //@auth Public
-router.get('/:id', auth, async (req,res)=>{
+router.get('/:id', auth,async (req,res)=>{
     const id = req.params.id;
     try {
         //@DESC FIND ONE PRODUCT BASED ON ID
@@ -162,6 +122,63 @@ router.get('/:id', auth, async (req,res)=>{
 });
 
 
+//@desc Adding a new product
+//@meth POST
+//@route /products
+//@auth Public
+router.post('',[auth, upload.single('image'), [
+    //@desc Perfom check on body using express-validator
+    check('name', 'Product must have a name').not().isEmpty(),
+    check('price', 'Product must have a price').not().isEmpty().isNumeric(),
+    ]
+],(req, res)=>{
+    console.log(req.file);
+     //@desc  check if validation results have errors
+     const errors = validationResult(req);
+     if(!errors.isEmpty()){
+         res.status(500).json({
+             errors : errors.array()
+         })
+     }
+ 
+     //@desc save product to database
+    
+     //@desc create an instance of model 
+     const product = new Product({
+         name : req.body.name,
+         price: req.body.price,
+         image : req.file.path,
+     });
+ 
+     //@desc save  product to database
+     product.save()
+     .then(product=>{
+         const response = {
+             message : "Product based on id",
+             count : product.length,
+             product : {
+                     id : product._id,
+                     name : product.name,
+                     price : product.price,
+                     image : product.image,
+                     request : {
+                        type : "POST",
+                        url: `http://localhost/3000/products/${product._id}` 
+                     }
+             }
+         }     
+         res.status(200).json(response);
+     })  
+    .catch (err=>{
+     res.status(400).json({
+         message : err.message
+     })
+     console.error(err.message);
+    }); 
+    
+});
+
+
 //@desc Updating a  product
 //@meth PATCH
 //@route /products/:1
@@ -169,7 +186,7 @@ router.get('/:id', auth, async (req,res)=>{
 router.patch('/:id',[auth,upload.single('image'),[
     check('name', 'Add a name').not().isEmpty(),
     check('price', 'Add a price').not().isEmpty().isNumeric()
-]], (req,res)=>{
+]],(req,res)=>{
     const id = req.params.id;
      //@desc  check if validation results have errors
     const errors = validationResult(req);
@@ -214,7 +231,7 @@ router.patch('/:id',[auth,upload.single('image'),[
 //@meth DELETE
 //@route /products/:1
 //@auth Private
-router.delete('/:id', auth, async (req, res)=>{
+router.delete('/:id', auth,async (req, res)=>{
     const id = req.params.id;
     //@desc remove one prduct based on id
     try {

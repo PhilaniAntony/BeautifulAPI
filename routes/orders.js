@@ -3,15 +3,15 @@ const router = express.Router();
 const { check, validationResult} = require('express-validator');
 const auth = require('../middleware/auth');
 
-
 //@desc require orders models
 const Order = require('../models/Orders');
+
 
 //@desc Getting orders
 //@meth GET
 //@route /orders
 //@auth Private
-router.get('', auth, async (req, res)=>{
+router.get('', auth,async (req, res)=>{
    
     //@desc fetch orders from database
     try {
@@ -46,6 +46,8 @@ router.get('', auth, async (req, res)=>{
         });
     }
 });
+
+
 //@desc Adding a new order
 //@meth GET
 //@route /orders/:id
@@ -74,6 +76,8 @@ router.get('/:id', auth, async (req, res)=>{
         });
     }
 });
+
+
 //@desc Adding a new order
 //@meth POST
 //@route /orders
@@ -123,6 +127,8 @@ router.post('',[auth, [
     }
     
 });
+
+
 //@desc Deleting a  order
 //@meth DELETE
 //@route /orders/:1
