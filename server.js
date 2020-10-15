@@ -3,6 +3,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 
 
+
 //@desc:require routes
 const homePageRoute = require('./routes/products');
 const ordersRoute = require('./routes/orders');
@@ -22,10 +23,11 @@ require('./config/db');
 
 
 //@desc: use routes
-app.use('/api/products', homePageRoute);
-app.use('/api/orders', ordersRoute);
-app.use('/api/users', userRoute);
 app.use('/api/auth', authRoute);
+app.use('/api/orders', ordersRoute);
+app.use('/api/products', homePageRoute);
+app.use('/api/users', userRoute);
+
 
 app.use((req, res, next)=>{
     const error = new Error('Not Found');

@@ -10,42 +10,36 @@ const User = require('../models/User');
 //desc config multer for upload
 
   
-//@desc set up destination and filename
-const storageConfig  = multer.diskStorage({
-
-    //@desc destination of upload
+//@config multer for product image
+const storage = multer.diskStorage({
+    //@desc set destination folder for products upload
     destination : (req, file, next)=>{
         next(null, 'uploads/');
     },
-        //@desc filename setup
-    filename: (req, file, next)=>{
-        next(null, new Date().toISOString() + file.originalname);
+    //@desc setup filename for upload file
+    filename : (req, file, next)=>{
+        next(null, new Date.now().toISOString() + file.origilname);
     }
 });
 
-//@desc setting up file filter for validating image types
-const filefilter = (req, file, next)=>{
-    if( file.mimetype === 'image/jpeg' || file.mimetype === 'image/png'){
+
+//desc filter only jpeg/png for products upload
+const filefilter =(req, file, next)=>{
+    if(file.mimetype === 'image/jpeg' || file.mimetype === 'image/png'){
         next(null, true);
     }else{
         next(null, false);
     }
-}
+};
 
-//@desc plugging in the configs in multer
+//@desc setup upload middleware
 const upload = multer({
-    storage : storageConfig,
-    limits : { 
+    storage: storage,
+    fileFilter :filefilter,
+    limits: {
         fileSize : 1024*1024*5
-    },
-    fileFilter : filefilter
-})
-
-
-
-
-
-
+    }
+});
 
 
 //@desc require Product model
@@ -92,7 +86,7 @@ router.get('', (req, res)=>{
 //@meth GET
 //@route /products/:1
 //@auth Public
-router.get('/:id', auth,async (req,res)=>{
+router.get('/:id', auth, async (req,res)=>{
     const id = req.params.id;
     try {
         //@DESC FIND ONE PRODUCT BASED ON ID
@@ -126,7 +120,7 @@ router.get('/:id', auth,async (req,res)=>{
 //@meth POST
 //@route /products
 //@auth Public
-router.post('',[auth, upload.single('image'), [
+router.post('',[auth, upload.array('images', 5), [
     //@desc Perfom check on body using express-validator
     check('name', 'Product must have a name').not().isEmpty(),
     check('price', 'Product must have a price').not().isEmpty().isNumeric(),
@@ -136,7 +130,7 @@ router.post('',[auth, upload.single('image'), [
      //@desc  check if validation results have errors
      const errors = validationResult(req);
      if(!errors.isEmpty()){
-         res.status(500).json({
+         res.status(400).json({
              errors : errors.array()
          })
      }
@@ -183,7 +177,7 @@ router.post('',[auth, upload.single('image'), [
 //@meth PATCH
 //@route /products/:1
 //@auth Private
-router.patch('/:id',[auth,upload.single('image'),[
+router.patch('/:id',[auth, upload.array('images', 5), [
     check('name', 'Add a name').not().isEmpty(),
     check('price', 'Add a price').not().isEmpty().isNumeric()
 ]],(req,res)=>{
@@ -199,7 +193,9 @@ router.patch('/:id',[auth,upload.single('image'),[
     //@desc save product to database
     const product = Product.findByIdAndUpdate({_id : id },{
             $set :{ name : req.body.name,
-                    price : req.body.price}
+                    price : req.body.price,
+                    image :req.file.path
+                 }
     })
     .then(product=>{
         const response = {
